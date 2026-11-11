@@ -1,0 +1,40 @@
+# Blueprint de Render para el backend de ASSET PRO FIXED ASSETS.
+# Render → New → Blueprint → elige este repositorio. Los valores con
+# "sync: false" se piden en el panel (no se guardan en git).
+services:
+  - type: web
+    name: asset-pro-fixed-assets-api
+    runtime: node
+    rootDir: backend
+    plan: free
+    region: oregon
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: ZONA_HORARIA
+        value: America/El_Salvador
+      - key: FIREBASE_SERVICE_ACCOUNT   # JSON completo de la cuenta de servicio
+        sync: false
+      - key: FRONTEND_URL               # https://<tu-proyecto>.vercel.app
+        sync: false
+      - key: CORS_VERCEL_PREVIEWS
+        value: "false"
+      - key: GOOGLE_MAPS_API_KEY
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: CONSOLE_URL
+        sync: false
+      - key: CONSOLE_SENSOR_KEY
+        sync: false

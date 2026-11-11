@@ -1,0 +1,247 @@
+@import "tailwindcss";
+
+/* ============================================================
+   ASSET PRO FIXED ASSETS — mismo diseño "vidrio nocturno" de
+   ASSET PRO PAY, con paleta carmesí (venado rojo) en lugar de azul.
+   "brand" es el color de acento; "stone" (gris cálido) el neutro.
+   ============================================================ */
+@theme {
+  --color-brand-50: #fff1f1;
+  --color-brand-100: #ffe0df;
+  --color-brand-200: #ffc5c2;
+  --color-brand-300: #ff9b95;
+  --color-brand-400: #fb6559;
+  --color-brand-500: #ef3b2c;
+  --color-brand-600: #d42a1c;
+  --color-brand-700: #b01f14;
+  --color-brand-800: #911e16;
+  --color-brand-900: #781f18;
+  --color-brand-950: #420b07;
+}
+
+:root {
+  --background: #f5f5f4;
+  --foreground: #1c1917;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+:focus-visible {
+  outline: 2px solid #ef3b2c;
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   Pantallas de acceso: foto del venado rojo (public/images/login-bg.jpg)
+   ============================================================ */
+.auth-fondo {
+  background-color: #140606;
+  background-image:
+    linear-gradient(180deg, rgba(20, 6, 6, 0.5) 0%, rgba(20, 6, 6, 0.3) 45%, rgba(20, 6, 6, 0.8) 100%),
+    url("/images/login-bg.jpg"),
+    radial-gradient(ellipse at 20% 30%, rgba(239, 59, 44, 0.22) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 70%, rgba(212, 42, 28, 0.18) 0%, transparent 55%),
+    linear-gradient(160deg, #2a0b09 0%, #1a0706 50%, #0c0303 100%);
+  background-size: cover;
+  background-position: center;
+}
+
+/* Área de trabajo: misma foto, más oscurecida para leer mejor. */
+.app-fondo {
+  background-color: #140606;
+  background-image:
+    linear-gradient(180deg, rgba(20, 6, 6, 0.8) 0%, rgba(20, 6, 6, 0.72) 50%, rgba(20, 6, 6, 0.9) 100%),
+    url("/images/login-bg.jpg"),
+    radial-gradient(ellipse at 20% 30%, rgba(239, 59, 44, 0.18) 0%, transparent 55%),
+    linear-gradient(160deg, #2a0b09 0%, #1a0706 50%, #0c0303 100%);
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+/* Brasas (equivalente a las luciérnagas azules de Pay) */
+.luciernaga {
+  position: absolute;
+  border-radius: 9999px;
+  background: #fdba74;
+  box-shadow: 0 0 10px 3px rgba(251, 146, 60, 0.75), 0 0 24px 8px rgba(239, 59, 44, 0.4);
+  opacity: 0;
+  animation-name: luciernaga;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+
+@keyframes luciernaga {
+  0%   { opacity: 0;   transform: translate(0, 0) scale(0.8); }
+  25%  { opacity: 0.9; }
+  50%  { opacity: 0.5; transform: translate(14px, -18px) scale(1); }
+  75%  { opacity: 0.9; }
+  100% { opacity: 0;   transform: translate(-8px, -34px) scale(0.8); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .luciernaga { animation: none; opacity: 0.6; }
+}
+
+.input-auth:-webkit-autofill,
+.input-auth:-webkit-autofill:hover,
+.input-auth:-webkit-autofill:focus {
+  -webkit-text-fill-color: #f5f5f4;
+  caret-color: #f5f5f4;
+  -webkit-box-shadow: 0 0 0 1000px transparent inset;
+  transition: background-color 9999s ease-out 0s;
+}
+
+/* ============================================================
+   Tema nocturno del sistema (área privada)
+   ============================================================ */
+.tema-nocturno,
+.auth-fondo {
+  color-scheme: dark;
+}
+
+@layer base {
+  .tema-nocturno *,
+  .tema-nocturno ::after,
+  .tema-nocturno ::before {
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.tema-nocturno select option {
+  background-color: #1c1917;
+  color: #e7e5e4;
+}
+
+.tema-nocturno input[type="checkbox"],
+.tema-nocturno input[type="radio"] {
+  accent-color: #d42a1c;
+}
+
+.swal2-popup {
+  background: #1c1917 !important;
+  color: #e7e5e4 !important;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 1.5rem !important;
+}
+.swal2-title { color: #ffffff !important; }
+.swal2-html-container { color: #d6d3d1 !important; }
+.swal2-toast { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important; }
+.swal2-container.swal2-backdrop-show { background: rgba(12, 3, 3, 0.7) !important; }
+
+/* ============================================================
+   MODO CLARO (modo día) — mismo mecanismo que Pay: reasigna los
+   colores de Tailwind dentro de .tema-nocturno.
+   ============================================================ */
+.tema-claro .tema-nocturno {
+  color-scheme: light;
+
+  --color-white: #1c1917;
+  --color-black: #a8a29e;
+
+  --color-stone-100: #1c1917;
+  --color-stone-200: #292524;
+  --color-stone-300: #44403c;
+  --color-stone-400: #78716c;
+  --color-stone-500: #78716c;
+
+  --color-brand-100: #781f18;
+  --color-brand-200: #911e16;
+  --color-brand-300: #b01f14;
+  --color-brand-400: #d42a1c;
+  --color-sky-100: #075985;
+  --color-sky-200: #075985;
+  --color-sky-300: #0369a1;
+  --color-sky-400: #0284c7;
+  --color-violet-200: #5b21b6;
+  --color-violet-300: #6d28d9;
+  --color-emerald-100: #065f46;
+  --color-emerald-200: #065f46;
+  --color-emerald-300: #047857;
+  --color-emerald-400: #059669;
+  --color-red-100: #991b1b;
+  --color-red-200: #991b1b;
+  --color-red-300: #b91c1c;
+  --color-red-400: #dc2626;
+  --color-amber-100: #92400e;
+  --color-amber-200: #92400e;
+  --color-amber-300: #b45309;
+  --color-amber-400: #d97706;
+  --color-orange-200: #9a3412;
+  --color-orange-300: #c2410c;
+  --color-orange-400: #ea580c;
+}
+
+/* Botones y etiquetas de color sólido conservan su texto blanco */
+.tema-claro .tema-nocturno [class~="bg-brand-600"],
+.tema-claro .tema-nocturno [class~="bg-red-600"],
+.tema-claro .tema-nocturno [class~="bg-emerald-600"],
+.tema-claro .tema-nocturno [class~="from-brand-500"] {
+  --color-white: #ffffff;
+}
+
+.tema-claro .app-fondo {
+  background-color: #f7f1ef;
+  background-image:
+    radial-gradient(ellipse at 15% 20%, rgba(239, 59, 44, 0.1) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 80%, rgba(251, 146, 60, 0.1) 0%, transparent 55%),
+    linear-gradient(160deg, #fafaf9 0%, #f7f1ef 50%, #e7e5e4 100%);
+}
+.tema-claro .luciernaga { display: none; }
+
+.tema-claro .tema-nocturno [class*="bg-stone-800/"] { background-color: rgba(255, 255, 255, 0.84); }
+.tema-claro .tema-nocturno [class*="bg-stone-900"]:not([class~="inset-0"]) { background-color: rgba(255, 255, 255, 0.95); }
+.tema-claro .tema-nocturno [class*="bg-stone-950/90"],
+.tema-claro .tema-nocturno [class*="bg-stone-950/55"] { background-color: rgba(255, 255, 255, 0.86); }
+.tema-claro .tema-nocturno[class~="inset-0"][class*="bg-stone-9"] { background-color: rgba(28, 25, 23, 0.35); }
+
+@layer base {
+  .tema-claro .tema-nocturno *,
+  .tema-claro .tema-nocturno ::after,
+  .tema-claro .tema-nocturno ::before {
+    border-color: rgba(28, 25, 23, 0.1);
+  }
+}
+
+.tema-claro .tema-nocturno select option {
+  background-color: #ffffff;
+  color: #1c1917;
+}
+
+html.tema-claro body:has(.tema-nocturno) .swal2-popup {
+  background: #ffffff !important;
+  color: #44403c !important;
+  border: 1px solid rgba(28, 25, 23, 0.08);
+}
+html.tema-claro body:has(.tema-nocturno) .swal2-title { color: #1c1917 !important; }
+html.tema-claro body:has(.tema-nocturno) .swal2-html-container { color: #57534e !important; }
+html.tema-claro body:has(.tema-nocturno) .swal2-container.swal2-backdrop-show { background: rgba(28, 25, 23, 0.35) !important; }
+
+/* ============================================================
+   Impresión (etiquetas QR)
+   ============================================================ */
+@media print {
+  html, body { background: #ffffff !important; }
+  .no-imprimir, .swal2-container { display: none !important; }
+}
