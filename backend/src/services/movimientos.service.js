@@ -16,6 +16,8 @@ const ubicacionDe = (a) => ({
 
 // Reglas de cada tipo de movimiento (hoja MOVIMIENTOS del Excel):
 //   ASIGNACION            → nuevo responsable; estado Asignado (puede cambiar ubicación)
+//   REASIGNACION          → el responsable deja el puesto: pasa a otro asociado en la MISMA
+//                           sucursal/área/ubicación; sigue Asignado
 //   TRASLADO              → cambia sucursal/área/ubicación (y opcionalmente responsable)
 //   PRESTAMO              → responsable temporal; estado Prestado
 //   DEVOLUCION            → sin responsable; estado Disponible
@@ -24,6 +26,7 @@ const ubicacionDe = (a) => ({
 //   BAJA                  → estado Baja (definitivo, motivo obligatorio)
 const PERMITIDOS_DESDE = {
     ASIGNACION: [ESTADOS.DISPONIBLE, ESTADOS.ASIGNADO],
+    REASIGNACION: [ESTADOS.ASIGNADO],
     TRASLADO: [ESTADOS.DISPONIBLE, ESTADOS.ASIGNADO, ESTADOS.PRESTADO],
     PRESTAMO: [ESTADOS.DISPONIBLE, ESTADOS.ASIGNADO],
     DEVOLUCION: [ESTADOS.ASIGNADO, ESTADOS.PRESTADO],
@@ -66,6 +69,13 @@ export const calcularCambios = async (activo, datos) => {
         case TIPOS_MOVIMIENTO.ASIGNACION:
             ponerResponsable(true);
             if (cambios.responsableId === activo.responsableId) throw new ErrorHttp(400, "El activo ya está asignado a ese asociado. Usa Traslado si solo cambia la ubicación.");
+            cambios.estado = ESTADOS.ASIGNADO;
+            break;
+        case TIPOS_MOVIMIENTO.REASIGNACION:
+            // Solo cambia la persona; sucursal, área y ubicación se conservan.
+            if (!activo.responsableId) throw new ErrorHttp(400, "El activo no tiene responsable actual. Usa Asignación.");
+            ponerResponsable(true);
+            if (cambios.responsableId === activo.responsableId) throw new ErrorHttp(400, "Selecciona un asociado distinto al responsable actual.");
             cambios.estado = ESTADOS.ASIGNADO;
             break;
         case TIPOS_MOVIMIENTO.TRASLADO: {

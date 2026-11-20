@@ -6,7 +6,7 @@ import Campo from "../ui/Campo";
 import { claseInput, botonPrimario, botonSecundario, botonPeligro } from "../ui/estilos";
 import { alertaError, toastExito, confirmar } from "../ui/alertas";
 import { registrarMovimiento } from "../../services/activos.service";
-import { TIPOS_MOVIMIENTO, INFO_ESTADO, LISTA_CONDICIONES, INFO_CONDICION } from "../../utils/activos";
+import { TIPOS_MOVIMIENTO, INFO_ESTADO, LISTA_CONDICIONES, INFO_CONDICION, textoUbicacion } from "../../utils/activos";
 import { hoyISO, mensajeError } from "../../utils/formato";
 
 // Registrar un movimiento (hoja MOVIMIENTOS): solo se ofrecen los tipos
@@ -87,7 +87,7 @@ export default function MovimientoModal({ abierto, activo, catalogos, tipoInicia
                     </div>
 
                     {def.responsable && (
-                        <Campo etiqueta={def.responsable === "opcional" ? "Nuevo responsable (opcional)" : "Asociado que recibe"} htmlFor="resp" requerido={def.responsable === true}>
+                        <Campo etiqueta={def.etiquetaResponsable || (def.responsable === "opcional" ? "Nuevo responsable (opcional)" : "Asociado que recibe")} htmlFor="resp" requerido={def.responsable === true}>
                             <select id="resp" required={def.responsable === true} value={datos.responsableId} onChange={set("responsableId")} className={claseInput}>
                                 <option value="">{def.responsable === "opcional" ? "Mantener el actual" : "Selecciona…"}</option>
                                 {asociados.filter((a) => a.id !== activo.responsableId).map((a) => (
@@ -95,6 +95,19 @@ export default function MovimientoModal({ abierto, activo, catalogos, tipoInicia
                                 ))}
                             </select>
                         </Campo>
+                    )}
+
+                    {def.mismaUbicacion && (
+                        <div className="grid grid-cols-1 gap-3 rounded-2xl bg-white/5 p-4 text-sm ring-1 ring-white/10 sm:grid-cols-2">
+                            <div>
+                                <p className="text-xs text-stone-400">Deja el puesto</p>
+                                <p className="font-semibold text-white">{activo.responsableNombre || "—"}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-stone-400">Se mantiene en</p>
+                                <p className="font-semibold text-white">{textoUbicacion(activo)}</p>
+                            </div>
+                        </div>
                     )}
 
                     {def.ubicacion && (
@@ -133,7 +146,7 @@ export default function MovimientoModal({ abierto, activo, catalogos, tipoInicia
 
                     <Campo etiqueta={def.peligro ? "Motivo de la baja" : "Comentario"} htmlFor="com" requerido={def.peligro}>
                         <textarea id="com" rows={3} required={def.peligro} minLength={def.peligro ? 5 : undefined} value={datos.comentario} onChange={set("comentario")} className={claseInput}
-                            placeholder={def.peligro ? "Ej. Equipo obsoleto, sin reparación posible" : "Detalle del movimiento"} />
+                            placeholder={def.peligro ? "Ej. Equipo obsoleto, sin reparación posible" : def.mismaUbicacion ? "Ej. Retiro de Juan Pérez; lo reemplaza María López" : "Detalle del movimiento"} />
                     </Campo>
 
                     <div className="flex justify-end gap-3 pt-2">

@@ -26,6 +26,8 @@ export const ETIQUETAS_CONDICION = { BUENO: "Bueno", REGULAR: "Regular", MALO: "
 // Baja) + préstamo/devolución, que cubren los estados "Prestado" y "Disponible".
 export const TIPOS_MOVIMIENTO = {
     ASIGNACION: "ASIGNACION",
+    // El colaborador deja el puesto: el activo pasa a quien lo reemplaza, en la misma ubicación.
+    REASIGNACION: "REASIGNACION",
     TRASLADO: "TRASLADO",
     PRESTAMO: "PRESTAMO",
     DEVOLUCION: "DEVOLUCION",
@@ -37,6 +39,7 @@ export const LISTA_TIPOS_MOVIMIENTO = Object.values(TIPOS_MOVIMIENTO);
 export const ETIQUETAS_MOVIMIENTO = {
     ALTA: "Alta (registro)",
     ASIGNACION: "Asignación",
+    REASIGNACION: "Reasignación",
     TRASLADO: "Traslado",
     PRESTAMO: "Préstamo",
     DEVOLUCION: "Devolución",

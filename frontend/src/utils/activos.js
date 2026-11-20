@@ -18,6 +18,7 @@ export const LISTA_CONDICIONES = Object.keys(INFO_CONDICION);
 // Tipos de movimiento. "desde": estados en los que se permite (igual que el backend).
 export const TIPOS_MOVIMIENTO = {
     ASIGNACION: { etiqueta: "Asignación", ayuda: "Entrega el activo a un asociado (puede cambiar su ubicación).", desde: ["DISPONIBLE", "ASIGNADO"], responsable: true, ubicacion: true },
+    REASIGNACION: { etiqueta: "Reasignación", ayuda: "El colaborador deja el puesto: el activo pasa a quien lo reemplaza, en la misma sucursal, área y ubicación.", desde: ["ASIGNADO"], responsable: true, etiquetaResponsable: "Nuevo colaborador en el puesto", mismaUbicacion: true },
     TRASLADO: { etiqueta: "Traslado", ayuda: "Cambia sucursal, área o ubicación (y opcionalmente el responsable).", desde: ["DISPONIBLE", "ASIGNADO", "PRESTADO"], responsable: "opcional", ubicacion: true },
     PRESTAMO: { etiqueta: "Préstamo", ayuda: "Préstamo temporal a un asociado; el activo queda Prestado.", desde: ["DISPONIBLE", "ASIGNADO"], responsable: true, ubicacion: true, devolucion: true },
     DEVOLUCION: { etiqueta: "Devolución", ayuda: "El activo regresa a inventario y queda Disponible, sin responsable.", desde: ["ASIGNADO", "PRESTADO"] },
@@ -34,6 +35,7 @@ export const ETIQUETAS_MOVIMIENTO = {
 export const COLOR_MOVIMIENTO = {
     ALTA: "bg-sky-500",
     ASIGNACION: "bg-emerald-500",
+    REASIGNACION: "bg-teal-500",
     TRASLADO: "bg-brand-500",
     PRESTAMO: "bg-violet-500",
     DEVOLUCION: "bg-sky-500",
