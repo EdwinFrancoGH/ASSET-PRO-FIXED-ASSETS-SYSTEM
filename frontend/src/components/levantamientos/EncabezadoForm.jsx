@@ -6,11 +6,15 @@ import Campo from "../ui/Campo";
 import NuevoAsociadoModal from "./NuevoAsociadoModal";
 import { claseInput } from "../ui/estilos";
 import { hoyISO } from "../../utils/formato";
+import { useAuth } from "../../context/AuthContext";
 
 // Encabezado del levantamiento (G2:H8 de AUDITORIA_AF): sucursal/área,
 // responsable del activo, líder de área, auditor y fecha.
 export default function EncabezadoForm({ datos, setDatos, catalogos, setCatalogos, auditores }) {
     const [nuevoAsociado, setNuevoAsociado] = useState(null);
+    // "Nuevo asociado" solo si el usuario puede modificar el catálogo Asociados.
+    const { userData } = useAuth();
+    const puedeAgregarAsociado = userData?.permisos?.catalogos?.asociados !== false;
     const set = (c) => (e) => setDatos((d) => ({ ...d, [c]: e.target.value }));
 
     const cambiarArea = (e) => {
@@ -45,7 +49,7 @@ export default function EncabezadoForm({ datos, setDatos, catalogos, setCatalogo
                             <option value="">Todos los responsables</option>
                             {asociados.map(opcion)}
                         </select>
-                        <button type="button" onClick={() => setNuevoAsociado("responsableId")} title="Nuevo asociado" aria-label="Nuevo asociado" className="mt-2 flex-none rounded-lg bg-white/10 px-3 text-stone-200 hover:bg-white/20"><FaUserPlus /></button>
+                        {puedeAgregarAsociado && <button type="button" onClick={() => setNuevoAsociado("responsableId")} title="Nuevo asociado" aria-label="Nuevo asociado" className="mt-2 flex-none rounded-lg bg-white/10 px-3 text-stone-200 hover:bg-white/20"><FaUserPlus /></button>}
                     </div>
                 </Campo>
                 <Campo etiqueta="Líder de área" htmlFor="l-lider" ayuda="Firma el acta de validación.">
@@ -54,7 +58,7 @@ export default function EncabezadoForm({ datos, setDatos, catalogos, setCatalogo
                             <option value="">Sin definir</option>
                             {asociados.map(opcion)}
                         </select>
-                        <button type="button" onClick={() => setNuevoAsociado("liderId")} title="Nuevo asociado" aria-label="Nuevo asociado" className="mt-2 flex-none rounded-lg bg-white/10 px-3 text-stone-200 hover:bg-white/20"><FaUserPlus /></button>
+                        {puedeAgregarAsociado && <button type="button" onClick={() => setNuevoAsociado("liderId")} title="Nuevo asociado" aria-label="Nuevo asociado" className="mt-2 flex-none rounded-lg bg-white/10 px-3 text-stone-200 hover:bg-white/20"><FaUserPlus /></button>}
                     </div>
                 </Campo>
                 <Campo etiqueta="Auditor" htmlFor="l-aud" requerido>

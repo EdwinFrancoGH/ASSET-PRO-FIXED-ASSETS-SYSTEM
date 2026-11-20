@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { FaPlus, FaCrosshairs, FaMapMarkerAlt } from "react-icons/fa";
+import { FaPlus, FaCrosshairs, FaMapMarkerAlt, FaLock, FaUserShield } from "react-icons/fa";
 
 import EncabezadoPagina from "../../../components/ui/EncabezadoPagina";
 import Cargando from "../../../components/ui/Cargando";
@@ -9,11 +9,13 @@ import Modal from "../../../components/ui/Modal";
 import Campo from "../../../components/ui/Campo";
 import RequireRole from "../../../components/auth/RequireRole";
 import { claseInput, botonPrimario, botonSecundario } from "../../../components/ui/estilos";
-import { tablaCaja, botonCabecera } from "../../../components/ui/tarjeta";
+import { tablaCaja, botonCabecera, botonVidrio } from "../../../components/ui/tarjeta";
+import { useAuth } from "../../../context/AuthContext";
+import { obtenerPermisos, actualizarPermisos } from "../../../services/configuracion.service";
 import { alertaError, toastExito, confirmar } from "../../../components/ui/alertas";
 
 import { obtenerCatalogo, crearEnCatalogo, actualizarEnCatalogo, eliminarDeCatalogo } from "../../../services/catalogos.service";
-import { ROLES_GESTION } from "../../../utils/roles";
+import { ROLES, ROLES_CATALOGOS, CATALOGOS_CONFIGURABLES } from "../../../utils/roles";
 import { mensajeError } from "../../../utils/formato";
 import { obtenerMiUbicacion, urlMapaEmbebido, tieneUbicacion } from "../../../utils/mapas";
 
@@ -53,12 +55,83 @@ const CATALOGOS = {
     }
 };
 
+// Administrador: qué catálogos puede modificar el Auditor.
+function PermisosAuditorModal({ abierto, onCerrar, onGuardado }) {
+    const [permisos, setPermisos] = useState(null);
+    const [info, setInfo] = useState(null);
+    const [guardando, setGuardando] = useState(false);
+
+    useEffect(() => {
+        if (!abierto) return;
+        setPermisos(null);
+        obtenerPermisos()
+            .then(({ data }) => { setPermisos({ ...data.data.auditor.catalogos }); setInfo(data.data); })
+            .catch((e) => alertaError(mensajeError(e)));
+    }, [abierto]);
+
+    const guardar = async () => {
+        setGuardando(true);
+        try {
+            const { data } = await actualizarPermisos({ auditor: { catalogos: permisos } });
+            toastExito(data.message);
+            onGuardado();
+        } catch (e) {
+            alertaError(mensajeError(e));
+        } finally {
+            setGuardando(false);
+        }
+    };
+
+    return (
+        <Modal abierto={abierto} titulo="Permisos del auditor" onCerrar={() => !guardando && onCerrar()}>
+            {!permisos ? <Cargando /> : (
+                <div className="space-y-4">
+                    <p className="text-sm text-stone-300">
+                        Elige qué catálogos puede <strong className="text-white">crear, editar y eliminar</strong> el rol Auditor.
+                        Siempre podrá consultarlos. Administrador y Responsable inventario no se ven afectados.
+                    </p>
+                    <ul className="divide-y divide-white/10 rounded-2xl bg-white/5">
+                        {CATALOGOS_CONFIGURABLES.map(([clave, nombre]) => {
+                            const activo = permisos[clave] === true;
+                            return (
+                                <li key={clave} className="flex items-center justify-between gap-4 px-4 py-3">
+                                    <div>
+                                        <p className="font-medium text-white">{nombre}</p>
+                                        <p className="text-xs text-stone-400">{activo ? "Puede modificar" : "Solo lectura"}{clave === "asociados" && " · incluye “Nuevo asociado” en el levantamiento"}</p>
+                                    </div>
+                                    <button type="button" role="switch" aria-checked={activo} aria-label={`Permitir al auditor modificar ${nombre}`}
+                                        onClick={() => setPermisos((p) => ({ ...p, [clave]: !p[clave] }))}
+                                        className={`relative h-7 w-12 flex-none rounded-full transition ${activo ? "bg-emerald-500" : "bg-stone-600"}`}>
+                                        <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${activo ? "left-6" : "left-1"}`} />
+                                    </button>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                    {info?.fechaActualizacion && (
+                        <p className="text-xs text-stone-500">Último cambio: {new Date(info.fechaActualizacion).toLocaleString("es-SV")}{info.actualizadoPor ? ` por ${info.actualizadoPor}` : ""}</p>
+                    )}
+                    <div className="flex justify-end gap-3 pt-2">
+                        <button type="button" onClick={onCerrar} disabled={guardando} className={botonSecundario}>Cancelar</button>
+                        <button type="button" onClick={guardar} disabled={guardando} className={botonPrimario}>{guardando ? "Guardando..." : "Guardar"}</button>
+                    </div>
+                </div>
+            )}
+        </Modal>
+    );
+}
+
 function Catalogos() {
+    const { userData, userRole, refreshUserData } = useAuth();
+    const [verPermisos, setVerPermisos] = useState(false);
     const [pestana, setPestana] = useState("tipos-activo");
     const [datos, setDatos] = useState({});
     const [edicion, setEdicion] = useState(null);
     const [guardando, setGuardando] = useState(false);
     const cfg = CATALOGOS[pestana];
+    // Permiso de edición por catálogo (lo calcula el backend en /auth/me).
+    const puedeEditar = (c) => userData?.permisos?.catalogos?.[c] !== false;
+    const editable = puedeEditar(pestana);
 
     const cargar = useCallback(async () => {
         try {
@@ -117,7 +190,10 @@ function Catalogos() {
     return (
         <>
             <EncabezadoPagina titulo="Catálogos" descripcion="Datos de referencia del inventario (hoja BD del Excel).">
-                <button onClick={() => setEdicion({ ...cfg.vacio })} className={botonCabecera}><FaPlus /> Nuevo {cfg.singular}</button>
+                {userRole === ROLES.ADMIN && (
+                    <button onClick={() => setVerPermisos(true)} className={botonVidrio}><FaUserShield /> Permisos del auditor</button>
+                )}
+                {editable && <button onClick={() => setEdicion({ ...cfg.vacio })} className={botonCabecera}><FaPlus /> Nuevo {cfg.singular}</button>}
             </EncabezadoPagina>
 
             <div className={tablaCaja}>
@@ -125,11 +201,17 @@ function Catalogos() {
                     {Object.entries(CATALOGOS).map(([k, v]) => (
                         <button key={k} role="tab" aria-selected={pestana === k} onClick={() => setPestana(k)}
                             className={`whitespace-nowrap rounded-t-xl px-5 py-3 font-medium transition ${pestana === k ? "bg-brand-500/20 text-white ring-1 ring-brand-400/40" : "text-stone-300 hover:bg-white/5"}`}>
+                            {!puedeEditar(k) && <FaLock className="mr-1.5 inline text-xs text-stone-400" title="Solo lectura" />}
                             {v.titulo} {datos[k] && <span className="ml-1 text-xs text-stone-400">({datos[k].length})</span>}
                         </button>
                     ))}
                 </div>
                 <p className="px-6 pt-4 text-sm text-stone-400">{cfg.ayuda}</p>
+                {!editable && (
+                    <p className="mx-6 mt-3 flex items-center gap-2 rounded-xl bg-amber-500/10 px-4 py-2 text-sm text-amber-200 ring-1 ring-amber-400/30">
+                        <FaLock /> Solo lectura: el Administrador no te ha habilitado modificar {cfg.titulo.toLowerCase()}.
+                    </p>
+                )}
                 {!lista ? <Cargando /> : lista.length === 0 ? <p className="p-10 text-center text-stone-300">Aún no hay registros.</p> : (
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
@@ -137,7 +219,7 @@ function Catalogos() {
                                 <tr>
                                     {cfg.columnas.map(([t]) => <th key={t} className="px-6 py-4 font-semibold">{t}</th>)}
                                     <th className="px-6 py-4 font-semibold">Estado</th>
-                                    <th className="px-6 py-4"><span className="sr-only">Acciones</span></th>
+                                    {editable && <th className="px-6 py-4"><span className="sr-only">Acciones</span></th>}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/10">
@@ -147,10 +229,10 @@ function Catalogos() {
                                         <td className="px-6 py-3">
                                             <span className={`rounded-full px-3 py-1 text-xs font-semibold ${r.activo !== false ? "bg-emerald-500/15 text-emerald-300" : "bg-white/10 text-stone-400"}`}>{r.activo !== false ? "Activo" : "Inactivo"}</span>
                                         </td>
-                                        <td className="px-6 py-3 text-right whitespace-nowrap">
+                                        {editable && <td className="px-6 py-3 text-right whitespace-nowrap">
                                             <button onClick={() => setEdicion({ ...cfg.vacio, ...r, liderId: r.liderId || "", areaId: r.areaId || "", sucursalId: r.sucursalId || "", vidaUtilAnios: r.vidaUtilAnios ?? "", direccion: r.direccion || "", lat: r.lat ?? "", lng: r.lng ?? "" })} className="rounded-lg px-3 py-1.5 font-medium text-brand-300 hover:bg-brand-500/10">Editar</button>
                                             <button onClick={() => eliminar(r)} className="rounded-lg px-3 py-1.5 font-medium text-red-400 hover:bg-red-500/15">Eliminar</button>
-                                        </td>
+                                        </td>}
                                     </tr>
                                 ))}
                             </tbody>
@@ -239,13 +321,19 @@ function Catalogos() {
                     </form>
                 )}
             </Modal>
+
+            <PermisosAuditorModal
+                abierto={verPermisos}
+                onCerrar={() => setVerPermisos(false)}
+                onGuardado={() => { setVerPermisos(false); refreshUserData(); }}
+            />
         </>
     );
 }
 
 export default function CatalogosPage() {
     return (
-        <RequireRole roles={ROLES_GESTION}>
+        <RequireRole roles={ROLES_CATALOGOS}>
             <Catalogos />
         </RequireRole>
     );

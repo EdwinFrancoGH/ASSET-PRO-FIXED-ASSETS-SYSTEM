@@ -1,5 +1,5 @@
 import { FaHome, FaBoxes, FaPlusCircle, FaExchangeAlt, FaClipboardCheck, FaBell, FaListUl, FaUserShield, FaCalendarAlt } from "react-icons/fa";
-import { ROLES, ROLES_GESTION, ROLES_LEVANTAMIENTO } from "../../utils/roles";
+import { ROLES, ROLES_GESTION, ROLES_LEVANTAMIENTO, ROLES_CATALOGOS } from "../../utils/roles";
 
 // Opciones del menú: las usan el Sidebar y los botones grandes del inicio en móvil.
 // "roles": quién ve el ítem. Sin "roles", lo ve cualquier usuario.
@@ -12,7 +12,7 @@ export const MENU = [
     { name: "Levantamientos", href: "/levantamientos", icon: <FaClipboardCheck />, descripcion: "Auditorías", fondo: "bg-amber-500/15 text-amber-300" },
     { name: "Programación", href: "/programacion", icon: <FaCalendarAlt />, roles: ROLES_LEVANTAMIENTO, descripcion: "Mi semana", fondo: "bg-violet-500/15 text-violet-300" },
     { name: "Notificaciones", href: "/notificaciones", icon: <FaBell />, descripcion: "Avisos", fondo: "bg-rose-500/15 text-rose-300" },
-    { name: "Catálogos", href: "/catalogos", icon: <FaListUl />, roles: ROLES_GESTION, descripcion: "Sucursales, áreas…", fondo: "bg-teal-500/15 text-teal-300" },
+    { name: "Catálogos", href: "/catalogos", icon: <FaListUl />, roles: ROLES_CATALOGOS, descripcion: "Sucursales, áreas…", fondo: "bg-teal-500/15 text-teal-300" },
     { name: "Usuarios", href: "/usuarios", icon: <FaUserShield />, roles: [ROLES.ADMIN], descripcion: "Accesos y roles", fondo: "bg-stone-500/20 text-stone-200" }
 ];
 

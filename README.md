@@ -64,9 +64,15 @@ Se calcula además meses de uso, depreciación acumulada y valor en libros (fich
 | Rol | Puede |
 |---|---|
 | Responsable inventario | Activos, movimientos, catálogos, levantamientos y Excel |
-| Auditor | Levantamientos que crea o se le asignan, actas, agregar asociados; consulta el resto |
+| Auditor | Levantamientos (crea, levanta en sitio, cierra y genera actas), programación y **catálogos según los permisos que le dé el Administrador**; consulta el resto. No gestiona usuarios |
 | Consulta | Solo lectura (activos, movimientos, levantamientos, Excel) |
 | Administrador | Todo, además usuarios y eliminar activos registrados por error |
+
+**Permisos del auditor** (Catálogos → *Permisos del auditor*, solo Administrador): un interruptor por catálogo
+(Tipos de activo, Sucursales, Áreas, Asociados). Activado = el Auditor puede crear, editar y eliminar; desactivado = solo lectura
+(la pestaña muestra un candado). El permiso de **Asociados** también controla el botón “Nuevo asociado” dentro del levantamiento.
+Por defecto todos están activados. Se guarda en Firestore en `configuracion/permisos` y el backend lo valida en cada cambio
+(`backend/src/services/permisos.service.js`).
 
 ## Instalación
 
@@ -192,8 +198,8 @@ Todas requieren `Authorization: Bearer <token de Firebase>` y responden `{ ok, m
 | Método | Ruta | Rol |
 |---|---|---|
 | GET | `/api/auth/me` | todos |
-| GET/POST/PUT/DELETE | `/api/catalogos/:catalogo` (`tipos-activo`, `sucursales`, `areas`, `asociados`) | leer: todos; escribir: Admin, Inventario |
-| POST | `/api/catalogos/asociados/registro` | Admin, Inventario, Auditor |
+| GET/POST/PUT/DELETE | `/api/catalogos/:catalogo` (`tipos-activo`, `sucursales`, `areas`, `asociados`) | leer: todos; escribir: Admin, Inventario y Auditor (si tiene permiso) |
+| POST | `/api/catalogos/asociados/registro` | Admin, Inventario, Auditor (si tiene permiso en Asociados) |
 | GET | `/api/activos` (filtros `q`, `estado`, `tipoId`, `sucursalId`, `areaId`, `responsableId`, `sinAuditar`, `noLocalizado`, `incluirBajas`) | todos |
 | GET | `/api/activos/resumen`, `/api/activos/exportar` (.xlsx) | todos |
 | GET/POST/PUT/DELETE | `/api/activos/:id` | escribir: Admin, Inventario (eliminar: Admin) |
@@ -204,3 +210,4 @@ Todas requieren `Authorization: Bearer <token de Firebase>` y responden `{ ok, m
 | POST | `/api/levantamientos/:id/cerrar` `{ aplicarDiferencias }` | ídem |
 | GET | `/api/levantamientos/:id/acta` → PDF | quien puede verlo |
 | GET/PATCH | `/api/notificaciones`, `/:id/leida`, `/leer-todas` | todos |
+| GET/PUT | `/api/configuracion/permisos` `{ auditor: { catalogos: { asociados: false, … } } }` | leer: todos; cambiar: Admin |

@@ -10,6 +10,7 @@ import movimientosRoutes from "./routes/movimientos.routes.js";
 import levantamientosRoutes from "./routes/levantamientos.routes.js";
 import notificacionesRoutes from "./routes/notificaciones.routes.js";
 import programacionRoutes, { ubicacionRouter } from "./routes/programacion.routes.js";
+import configuracionRoutes from "./routes/configuracion.routes.js";
 
 import { verifyToken } from "./middlewares/auth.middleware.js";
 
@@ -50,6 +51,7 @@ app.use("/api/levantamientos", verifyToken, levantamientosRoutes);
 app.use("/api/notificaciones", verifyToken, notificacionesRoutes);
 app.use("/api/programacion", verifyToken, programacionRoutes);
 app.use("/api/ubicacion", verifyToken, ubicacionRouter);
+app.use("/api/configuracion", verifyToken, configuracionRoutes);
 
 // Health check para Render.
 app.get("/health", (req, res) => res.json({ ok: true }));
