@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Swal from "sweetalert2";
 import { FiMail, FiLock, FiEye, FiEyeOff, FiCheckCircle, FiArrowRight } from "react-icons/fi";
 import { useAuth } from "../../../context/AuthContext";
 import LogoAssetPro from "../../../components/auth/LogoAssetPro";
@@ -51,7 +50,7 @@ export default function LoginPage() {
     // true mientras el propio formulario está iniciando sesión, para no
     // confundir el login recién hecho con un "regreso" a esta pantalla.
     const ingresandoRef = useRef(false);
-    const preguntandoRef = useRef(false);
+    const cerrandoRef = useRef(false);
 
     // Mensaje informativo (?motivo=inactividad) y correo recordado.
     useEffect(() => {
@@ -69,33 +68,20 @@ export default function LoginPage() {
     }, []);
 
     // Si llega aquí con una sesión abierta (por ejemplo, con el botón
-    // "Atrás" del navegador después de ingresar), se pregunta si desea
-    // salir del sistema en lugar de dejar la sesión abierta.
+    // "Atrás" del navegador después de ingresar), la sesión se CIERRA de
+    // inmediato. Así "Adelante" ya no puede volver a entrar al sistema:
+    // la ruta protegida lo regresa a este login.
     useEffect(() => {
-        if (!user || ingresandoRef.current || preguntandoRef.current) return;
-        preguntandoRef.current = true;
-
-        Swal.fire({
-            icon: "warning",
-            title: "¿Deseas salir del sistema?",
-            text: "Tienes una sesión abierta. Si sales, se cerrará tu sesión por seguridad.",
-            showCancelButton: true,
-            confirmButtonText: "Sí, cerrar sesión",
-            cancelButtonText: "No, volver al sistema",
-            confirmButtonColor: "#dc2626",
-            reverseButtons: true,
-            allowOutsideClick: false,
-            allowEscapeKey: false
-        }).then(async (r) => {
-            preguntandoRef.current = false;
-            if (r.isConfirmed) {
-                await logout();
-                setAviso(AVISOS.salida);
-            } else {
-                router.push("/dashboard");
-            }
-        });
-    }, [user, logout, router]);
+        if (!user || ingresandoRef.current || cerrandoRef.current) return;
+        cerrandoRef.current = true;
+        logout()
+            .then(() => {
+                setAviso("Por seguridad se cerró tu sesión al volver a la pantalla de inicio. Ingresa de nuevo para continuar.");
+                setPassword("");
+                setEnviando(false);
+            })
+            .finally(() => { cerrandoRef.current = false; });
+    }, [user, logout]);
 
     const onSubmit = async (e) => {
         e.preventDefault();
@@ -111,9 +97,8 @@ export default function LoginPage() {
             } catch {
                 // Almacenamiento no disponible: se ignora.
             }
-            // push (no replace) para que el login quede en el historial:
-            // así, al presionar "Atrás", se vuelve aquí y se pregunta si
-            // desea cerrar la sesión.
+            // El login queda en el historial: si luego presiona "Atrás" y vuelve
+            // aquí, la sesión se cierra (ver efecto de arriba).
             router.push("/dashboard");
         } catch (err) {
             ingresandoRef.current = false;
