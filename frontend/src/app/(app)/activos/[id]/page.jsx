@@ -19,15 +19,17 @@ import { alertaError, toastExito, confirmar } from "../../../../components/ui/al
 import { useAuth } from "../../../../context/AuthContext";
 import { obtenerActivo, eliminarActivo } from "../../../../services/activos.service";
 import { obtenerTodosLosCatalogos } from "../../../../services/catalogos.service";
-import { ROLES, ROLES_GESTION } from "../../../../utils/roles";
+import { ROLES } from "../../../../utils/roles";
 import { INFO_CONDICION } from "../../../../utils/activos";
 import { formatoMonto, formatoFecha, formatoFechaHora, mensajeError } from "../../../../utils/formato";
 
 export default function ActivoDetallePage() {
     const { id } = useParams();
     const router = useRouter();
-    const { userRole } = useAuth();
-    const esGestion = ROLES_GESTION.includes(userRole);
+    const { userRole, userData } = useAuth();
+    // Admin/Inventario siempre; Auditor según los permisos que le dé el Administrador.
+    const puedeEditar = userData?.permisos?.activos?.editar === true;
+    const puedeMover = userData?.permisos?.activos?.movimientos === true;
 
     const [activo, setActivo] = useState(null);
     const [catalogos, setCatalogos] = useState({ tipos: [], sucursales: [], areas: [], asociados: [] });
@@ -70,12 +72,8 @@ export default function ActivoDetallePage() {
             <Link href="/activos" className="mb-4 inline-flex items-center gap-2 text-sm text-stone-300 hover:text-white"><FaArrowLeft /> Consolidado de activos</Link>
             <EncabezadoPagina titulo={`${activo.codigo} · ${activo.descripcion}`} descripcion={`${activo.idActivo} · ${activo.tipoNombre}`}>
                 <button onClick={() => setModalQR(true)} className={botonVidrio}><FaQrcode /> Etiqueta QR</button>
-                {esGestion && !esBaja && (
-                    <>
-                        <Link href={`/activos/${id}/editar`} className={botonVidrio}><FaEdit /> Editar</Link>
-                        <button onClick={() => setModalMov(true)} className={botonCabecera}><FaExchangeAlt /> Registrar movimiento</button>
-                    </>
-                )}
+                {puedeEditar && !esBaja && <Link href={`/activos/${id}/editar`} className={botonVidrio}><FaEdit /> Editar</Link>}
+                {puedeMover && !esBaja && <button onClick={() => setModalMov(true)} className={botonCabecera}><FaExchangeAlt /> Registrar movimiento</button>}
             </EncabezadoPagina>
 
             {activo.noLocalizado && (

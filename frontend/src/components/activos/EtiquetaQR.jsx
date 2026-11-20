@@ -7,13 +7,13 @@ import Modal from "../ui/Modal";
 import { botonPrimario, botonSecundario } from "../ui/estilos";
 
 // Etiqueta con código QR (columna QRCode del Excel). El QR abre la ficha
-// del activo en el sistema; se imprime en una ventana aparte.
+// PÚBLICA del activo (/ficha/:id): no pide sesión ni da acceso al sistema.
 export default function EtiquetaQR({ abierto, activo, onCerrar }) {
     const [qr, setQr] = useState("");
 
     useEffect(() => {
         if (!abierto || !activo) return;
-        const url = `${window.location.origin}/activos/${activo.id}`;
+        const url = `${window.location.origin}/ficha/${activo.id}`;
         QRCode.toDataURL(url, { margin: 1, width: 360, color: { dark: "#1c0a0a", light: "#ffffff" } }).then(setQr).catch(() => setQr(""));
     }, [abierto, activo]);
 
@@ -43,7 +43,7 @@ export default function EtiquetaQR({ abierto, activo, onCerrar }) {
                     <p>S/N {activo.serie || "—"}</p>
                 </div>
             </div>
-            <p className="mt-3 text-center text-sm text-stone-400">Al escanearlo se abre la ficha del activo (requiere iniciar sesión).</p>
+            <p className="mt-3 text-center text-sm text-stone-400">Al escanearlo, cualquier persona ve la ficha pública del activo (solo lectura, sin iniciar sesión).</p>
             <div className="mt-5 flex justify-end gap-3">
                 <button onClick={onCerrar} className={botonSecundario}>Cerrar</button>
                 <button onClick={imprimir} disabled={!qr} className={botonPrimario}><span className="inline-flex items-center gap-2"><FaPrint /> Imprimir</span></button>

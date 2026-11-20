@@ -12,6 +12,12 @@ export const ROLES_LEVANTAMIENTO = [ROLES.ADMIN, ROLES.INVENTARIO, ROLES.AUDITOR
 // Ven Catálogos con opción de editar (el Auditor, solo lo que el Administrador le habilite).
 export const ROLES_CATALOGOS = [ROLES.ADMIN, ROLES.INVENTARIO, ROLES.AUDITOR];
 
+// Acciones sobre activos que el Administrador puede habilitar al Auditor.
+export const ACCIONES_ACTIVOS_CONFIGURABLES = [
+    ["editar", "Editar activos", "Botón “Editar” en la ficha del activo (datos, compra, condición y foto)"],
+    ["movimientos", "Registrar movimientos", "Asignación, reasignación, traslado, préstamo, devolución, mantenimiento y baja"]
+];
+
 // Catálogos cuyo permiso de edición del Auditor configura el Administrador.
 export const CATALOGOS_CONFIGURABLES = [
     ["tipos-activo", "Tipos de activo"],

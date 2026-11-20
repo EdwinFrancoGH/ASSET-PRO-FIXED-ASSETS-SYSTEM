@@ -11,6 +11,7 @@ import levantamientosRoutes from "./routes/levantamientos.routes.js";
 import notificacionesRoutes from "./routes/notificaciones.routes.js";
 import programacionRoutes, { ubicacionRouter } from "./routes/programacion.routes.js";
 import configuracionRoutes from "./routes/configuracion.routes.js";
+import publicoRoutes from "./routes/publico.routes.js";
 
 import { verifyToken } from "./middlewares/auth.middleware.js";
 
@@ -40,7 +41,10 @@ app.use(cors({
 // Las fotos de los activos viajan como JPEG comprimido en base64.
 app.use(express.json({ limit: "4mb" }));
 
-// Todas las rutas requieren sesión. No hay auto-registro: los usuarios
+// Ficha pública del activo (etiqueta QR): la ÚNICA ruta sin sesión.
+app.use("/api/publico", publicoRoutes);
+
+// El resto de rutas requieren sesión. No hay auto-registro: los usuarios
 // los crea un Administrador desde /usuarios (o el script de seed).
 app.use("/api/auth", verifyToken, authRoutes);
 app.use("/api/users", verifyToken, usersRoutes);

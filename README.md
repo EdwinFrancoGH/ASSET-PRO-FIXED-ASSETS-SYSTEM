@@ -68,8 +68,9 @@ Se calcula además meses de uso, depreciación acumulada y valor en libros (fich
 | Consulta | Solo lectura (activos, movimientos, levantamientos, Excel) |
 | Administrador | Todo, además usuarios y eliminar activos registrados por error |
 
-**Permisos del auditor** (Catálogos → *Permisos del auditor*, solo Administrador): un interruptor por catálogo
-(Tipos de activo, Sucursales, Áreas, Asociados). Activado = el Auditor puede crear, editar y eliminar; desactivado = solo lectura
+**Permisos del auditor** (Catálogos → *Permisos del auditor*, solo Administrador):
+- **Activos**: *Editar activos* (botón “Editar” de la ficha) y *Registrar movimientos* (botón “Registrar movimiento”). Desactivados, el Auditor no ve esos botones.
+- **Catálogos**: un interruptor por catálogo (Tipos de activo, Sucursales, Áreas, Asociados). Activado = crear, editar y eliminar; desactivado = solo lectura
 (la pestaña muestra un candado). El permiso de **Asociados** también controla el botón “Nuevo asociado” dentro del levantamiento.
 Por defecto todos están activados. Se guarda en Firestore en `configuracion/permisos` y el backend lo valida en cada cambio
 (`backend/src/services/permisos.service.js`).
@@ -192,6 +193,12 @@ git push -u origin main
 - **Google Cloud** (si usas mapas): agrega el dominio de Vercel a las restricciones de la clave del navegador.
 - Cada `git push` a `main` vuelve a publicar ambos automáticamente.
 
+## Etiqueta QR y ficha pública
+El QR de cada etiqueta abre `https://<tu-dominio>/ficha/<id>`: una página **aislada del sistema** (sin login, sin menú, sin enlaces internos)
+que cualquiera puede ver con el celular. Muestra solo datos de identificación y ubicación; **no** muestra valores de compra, depreciación,
+movimientos ni levantamientos. Las etiquetas impresas antes (que apuntaban a `/activos/<id>`) también llevan a la ficha pública si quien
+las escanea no tiene sesión iniciada.
+
 ## API (resumen)
 Todas requieren `Authorization: Bearer <token de Firebase>` y responden `{ ok, message, data }`.
 
@@ -202,12 +209,13 @@ Todas requieren `Authorization: Bearer <token de Firebase>` y responden `{ ok, m
 | POST | `/api/catalogos/asociados/registro` | Admin, Inventario, Auditor (si tiene permiso en Asociados) |
 | GET | `/api/activos` (filtros `q`, `estado`, `tipoId`, `sucursalId`, `areaId`, `responsableId`, `sinAuditar`, `noLocalizado`, `incluirBajas`) | todos |
 | GET | `/api/activos/resumen`, `/api/activos/exportar` (.xlsx) | todos |
-| GET/POST/PUT/DELETE | `/api/activos/:id` | escribir: Admin, Inventario (eliminar: Admin) |
-| POST | `/api/activos/:id/movimientos` `{ tipo, fecha, responsableId, sucursalId, areaId, ubicacion, comentario… }` | Admin, Inventario |
+| GET/POST/PUT/DELETE | `/api/activos/:id` | crear: Admin, Inventario; editar: además Auditor con permiso; eliminar: Admin |
+| POST | `/api/activos/:id/movimientos` `{ tipo, fecha, responsableId, sucursalId, areaId, ubicacion, comentario… }` | Admin, Inventario y Auditor con permiso |
 | GET | `/api/movimientos`, `/api/movimientos/exportar` | todos |
 | GET/POST | `/api/levantamientos` | crear: Admin, Inventario, Auditor |
 | GET/PUT/DELETE | `/api/levantamientos/:id` | según rol / auditor asignado |
 | POST | `/api/levantamientos/:id/cerrar` `{ aplicarDiferencias }` | ídem |
 | GET | `/api/levantamientos/:id/acta` → PDF | quien puede verlo |
 | GET/PATCH | `/api/notificaciones`, `/:id/leida`, `/leer-todas` | todos |
-| GET/PUT | `/api/configuracion/permisos` `{ auditor: { catalogos: { asociados: false, … } } }` | leer: todos; cambiar: Admin |
+| GET | `/api/publico/activos/:id` — ficha pública (etiqueta QR): código, descripción, tipo, marca, modelo, serie, estado, condición, ubicación, responsable, foto y fecha del último levantamiento. **Sin sesión**; sin valores ni historial; máx. 60 consultas/min por IP | público |
+| GET/PUT | `/api/configuracion/permisos` `{ auditor: { catalogos: { asociados: false, … }, activos: { editar: true, movimientos: false } } }` | leer: todos; cambiar: Admin |

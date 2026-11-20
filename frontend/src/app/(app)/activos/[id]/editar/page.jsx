@@ -8,13 +8,14 @@ import RequireRole from "../../../../../components/auth/RequireRole";
 import ActivoForm from "../../../../../components/activos/ActivoForm";
 import { alertaError, toastExito } from "../../../../../components/ui/alertas";
 import { obtenerActivo, actualizarActivo } from "../../../../../services/activos.service";
-import { ROLES_GESTION } from "../../../../../utils/roles";
+import { useAuth } from "../../../../../context/AuthContext";
 import { mensajeError } from "../../../../../utils/formato";
 
 export default function EditarActivoPage() {
     const { id } = useParams();
     const router = useRouter();
     const [activo, setActivo] = useState(null);
+    const { userData } = useAuth();
 
     useEffect(() => {
         obtenerActivo(id)
@@ -37,7 +38,7 @@ export default function EditarActivoPage() {
     };
 
     return (
-        <RequireRole roles={ROLES_GESTION}>
+        <RequireRole permitido={userData?.permisos?.activos?.editar === true}>
             {!activo ? <Cargando /> : (
                 <>
                     <EncabezadoPagina titulo={`Editar ${activo.codigo}`} descripcion="El responsable, la ubicación y el estado cambian con un movimiento (queda historial)." />

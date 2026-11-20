@@ -15,7 +15,7 @@ import { obtenerPermisos, actualizarPermisos } from "../../../services/configura
 import { alertaError, toastExito, confirmar } from "../../../components/ui/alertas";
 
 import { obtenerCatalogo, crearEnCatalogo, actualizarEnCatalogo, eliminarDeCatalogo } from "../../../services/catalogos.service";
-import { ROLES, ROLES_CATALOGOS, CATALOGOS_CONFIGURABLES } from "../../../utils/roles";
+import { ROLES, ROLES_CATALOGOS, CATALOGOS_CONFIGURABLES, ACCIONES_ACTIVOS_CONFIGURABLES } from "../../../utils/roles";
 import { mensajeError } from "../../../utils/formato";
 import { obtenerMiUbicacion, urlMapaEmbebido, tieneUbicacion } from "../../../utils/mapas";
 
@@ -55,9 +55,25 @@ const CATALOGOS = {
     }
 };
 
-// Administrador: qué catálogos puede modificar el Auditor.
+// Interruptor de un permiso.
+function FilaPermiso({ nombre, detalle, activo, onCambiar }) {
+    return (
+        <li className="flex items-center justify-between gap-4 px-4 py-3">
+            <div>
+                <p className="font-medium text-white">{nombre}</p>
+                <p className="text-xs text-stone-400">{detalle}</p>
+            </div>
+            <button type="button" role="switch" aria-checked={activo} aria-label={`Permitir al auditor: ${nombre}`} onClick={onCambiar}
+                className={`relative h-7 w-12 flex-none rounded-full transition ${activo ? "bg-emerald-500" : "bg-stone-600"}`}>
+                <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${activo ? "left-6" : "left-1"}`} />
+            </button>
+        </li>
+    );
+}
+
+// Administrador: qué puede modificar el Auditor (catálogos y acciones sobre activos).
 function PermisosAuditorModal({ abierto, onCerrar, onGuardado }) {
-    const [permisos, setPermisos] = useState(null);
+    const [permisos, setPermisos] = useState(null); // { catalogos: {...}, activos: {...} }
     const [info, setInfo] = useState(null);
     const [guardando, setGuardando] = useState(false);
 
@@ -65,14 +81,16 @@ function PermisosAuditorModal({ abierto, onCerrar, onGuardado }) {
         if (!abierto) return;
         setPermisos(null);
         obtenerPermisos()
-            .then(({ data }) => { setPermisos({ ...data.data.auditor.catalogos }); setInfo(data.data); })
+            .then(({ data }) => { setPermisos({ catalogos: { ...data.data.auditor.catalogos }, activos: { ...data.data.auditor.activos } }); setInfo(data.data); })
             .catch((e) => alertaError(mensajeError(e)));
     }, [abierto]);
+
+    const alternar = (seccion, clave) => setPermisos((p) => ({ ...p, [seccion]: { ...p[seccion], [clave]: !p[seccion][clave] } }));
 
     const guardar = async () => {
         setGuardando(true);
         try {
-            const { data } = await actualizarPermisos({ auditor: { catalogos: permisos } });
+            const { data } = await actualizarPermisos({ auditor: permisos });
             toastExito(data.message);
             onGuardado();
         } catch (e) {
@@ -85,29 +103,35 @@ function PermisosAuditorModal({ abierto, onCerrar, onGuardado }) {
     return (
         <Modal abierto={abierto} titulo="Permisos del auditor" onCerrar={() => !guardando && onCerrar()}>
             {!permisos ? <Cargando /> : (
-                <div className="space-y-4">
+                <div className="space-y-5">
                     <p className="text-sm text-stone-300">
-                        Elige qué catálogos puede <strong className="text-white">crear, editar y eliminar</strong> el rol Auditor.
-                        Siempre podrá consultarlos. Administrador y Responsable inventario no se ven afectados.
+                        Activa lo que el rol <strong className="text-white">Auditor</strong> puede modificar. Lo desactivado queda en solo lectura.
+                        Administrador y Responsable inventario no se ven afectados.
                     </p>
-                    <ul className="divide-y divide-white/10 rounded-2xl bg-white/5">
-                        {CATALOGOS_CONFIGURABLES.map(([clave, nombre]) => {
-                            const activo = permisos[clave] === true;
-                            return (
-                                <li key={clave} className="flex items-center justify-between gap-4 px-4 py-3">
-                                    <div>
-                                        <p className="font-medium text-white">{nombre}</p>
-                                        <p className="text-xs text-stone-400">{activo ? "Puede modificar" : "Solo lectura"}{clave === "asociados" && " · incluye “Nuevo asociado” en el levantamiento"}</p>
-                                    </div>
-                                    <button type="button" role="switch" aria-checked={activo} aria-label={`Permitir al auditor modificar ${nombre}`}
-                                        onClick={() => setPermisos((p) => ({ ...p, [clave]: !p[clave] }))}
-                                        className={`relative h-7 w-12 flex-none rounded-full transition ${activo ? "bg-emerald-500" : "bg-stone-600"}`}>
-                                        <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${activo ? "left-6" : "left-1"}`} />
-                                    </button>
-                                </li>
-                            );
-                        })}
-                    </ul>
+
+                    <div>
+                        <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-brand-300">Activos</h3>
+                        <ul className="divide-y divide-white/10 rounded-2xl bg-white/5">
+                            {ACCIONES_ACTIVOS_CONFIGURABLES.map(([clave, nombre, detalle]) => (
+                                <FilaPermiso key={clave} nombre={nombre} detalle={permisos.activos[clave] ? detalle : "Desactivado: no ve el botón"}
+                                    activo={permisos.activos[clave] === true} onCambiar={() => alternar("activos", clave)} />
+                            ))}
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-brand-300">Catálogos (crear, editar y eliminar)</h3>
+                        <ul className="divide-y divide-white/10 rounded-2xl bg-white/5">
+                            {CATALOGOS_CONFIGURABLES.map(([clave, nombre]) => {
+                                const activo = permisos.catalogos[clave] === true;
+                                return (
+                                    <FilaPermiso key={clave} nombre={nombre} activo={activo} onCambiar={() => alternar("catalogos", clave)}
+                                        detalle={`${activo ? "Puede modificar" : "Solo lectura"}${clave === "asociados" ? " · incluye “Nuevo asociado” en el levantamiento" : ""}`} />
+                                );
+                            })}
+                        </ul>
+                    </div>
+
                     {info?.fechaActualizacion && (
                         <p className="text-xs text-stone-500">Último cambio: {new Date(info.fechaActualizacion).toLocaleString("es-SV")}{info.actualizadoPor ? ` por ${info.actualizadoPor}` : ""}</p>
                     )}

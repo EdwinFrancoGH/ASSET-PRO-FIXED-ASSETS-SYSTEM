@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
 
 function PantallaCarga() {
@@ -20,10 +20,16 @@ function PantallaCarga() {
 export default function ProtectedRoute({ children }) {
     const { user, loading, perfilListo, userData, errorPerfil, logout } = useAuth();
     const router = useRouter();
+    const pathname = usePathname();
 
     useEffect(() => {
-        if (!loading && !user) router.replace("/login");
-    }, [user, loading, router]);
+        if (loading || user) return;
+        // Etiquetas QR impresas antes apuntaban a /activos/:id. Sin sesión,
+        // se envían a la ficha pública en lugar del login.
+        const m = pathname?.match(/^\/activos\/([A-Za-z0-9_-]+)\/?$/);
+        if (m && m[1] !== "nuevo") router.replace(`/ficha/${m[1]}`);
+        else router.replace("/login");
+    }, [user, loading, router, pathname]);
 
     if (loading || !user || !perfilListo) return <PantallaCarga />;
 
